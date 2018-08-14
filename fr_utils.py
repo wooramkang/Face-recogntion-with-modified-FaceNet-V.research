@@ -12,7 +12,9 @@ from keras.layers.normalization import BatchNormalization
 from keras.layers.pooling import MaxPooling2D, AveragePooling2D
 import h5py
 #import matplotlib.pyplot as plt
-
+from preprocessing.LAB_luminance import *
+import preprocessing.histogram_equalization as hist
+import preprocessing.Gamma_correction as gamma
 
 _FLOATX = 'float32'
 
@@ -200,8 +202,22 @@ def load_dataset():
 
 def img_path_to_encoding(image_path, model):
     img1 = cv2.imread(image_path, 1)
-    return img_to_encoding(img1, model)
-    
+    return img_to_encoding(preprocessing(img1), model)
+"""
+by using LAB_luminance 
+preprocessed
+"""
+#   return img_to_encoding(gamma.preprocessing_gamma(img1), model)
+"""
+    by using gamma_correction  
+    preprocessed
+"""
+#   return img_to_encoding(hist.preprocessing_hist(img1), model)
+"""
+    by using CLAHE (Contrast Limited Adaptive Histogram Equalization  
+    preprocessed
+"""
+
 
 def img_to_encoding(image, model):
     image = cv2.resize(image, (96, 96)) 

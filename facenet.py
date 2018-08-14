@@ -10,6 +10,9 @@ from numpy import genfromtxt
 import tensorflow as tf
 from fr_utils import *
 from inception_blocks_v2 import *
+from preprocessing.LAB_luminance import *
+import preprocessing.histogram_equalization as hist
+import preprocessing.Gamma_correction as gamma
 
 PADDING = 50
 ready_to_detect_identity = True
@@ -111,6 +114,23 @@ def process_frame(img, frame, face_cascade):
 
     # Loop through all the faces detected and determine whether or not they are in the database
     identities = []
+
+    frame_t = preprocessing(frame)
+    """
+    by using LAB_luminance 
+    preprocessed
+    """
+    #frame_t = hist.preprocessing_hist(frame)
+    """
+        by using CLAHE (Contrast Limited Adaptive Histogram Equalization  
+        preprocessed
+    """
+    #frame_t = gamma.preprocessing_gamma(frame)
+    """
+            by using gamma correction  
+            preprocessed
+    """
+
     for (x, y, w, h) in faces:
         x1 = x-PADDING
         y1 = y-PADDING
@@ -119,11 +139,15 @@ def process_frame(img, frame, face_cascade):
 
         img = cv2.rectangle(frame,(x1, y1),(x2, y2),(255,0,0),2)
 
-        identity = find_identity(frame, x1, y1, x2, y2)
+        identity = find_identity(frame_t, x1, y1, x2, y2)
 
         if identity is not None:
             cv2.putText(img, identity, (x1, y1), cv2.FONT_HERSHEY_PLAIN, 4, (255, 255, 255), 2, cv2.LINE_AA)
             identities.append(identity)
+
+    key = cv2.waitKey(100)
+    cv2.namedWindow("Face")
+    cv2.imshow("Face", frame_t)
 
     if identities != []:
         cv2.imwrite('_'.join(identities)+'.png',img)
