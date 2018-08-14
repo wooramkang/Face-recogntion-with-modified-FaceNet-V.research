@@ -11,7 +11,7 @@ from keras.models import Model
 from keras.layers.normalization import BatchNormalization
 from keras.layers.pooling import MaxPooling2D, AveragePooling2D
 import h5py
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 
 _FLOATX = 'float32'
@@ -38,6 +38,15 @@ def concatenate(tensors, axis=-1):
 def LRN2D(x):
     return tf.nn.lrn(x, alpha=1e-4, beta=0.75)
 
+"""
+    written by wooram 2018.08.14
+    
+    keras erased LRN2D before so there are just few options
+    1. make same one
+    2. find similar one
+
+
+"""
 def conv2d_bn(x,
               layer=None,
               cv1_out=None,

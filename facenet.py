@@ -10,11 +10,10 @@ from numpy import genfromtxt
 import tensorflow as tf
 from fr_utils import *
 from inception_blocks_v2 import *
-import win32com.client as wincl
 
 PADDING = 50
 ready_to_detect_identity = True
-windows10_voice_interface = wincl.Dispatch("SAPI.SpVoice")
+
 
 FRmodel = faceRecoModel(input_shape=(3, 96, 96))
 
@@ -54,8 +53,22 @@ def prepare_database():
     # load all the images of individuals to recognize into the database
     for file in glob.glob("images/*"):
         identity = os.path.splitext(os.path.basename(file))[0]
+        identity = str(identity).split('_')[0]
+        print(identity)
+        ## from this, written by wooram 2018. 08. 13
+
         database[identity] = img_path_to_encoding(file, FRmodel)
 
+    #print(str(database["wooram"]))
+    """
+    written by wooram 2018.08.13
+    
+    1. think about How to save the embedding metrics
+    
+    2. the opposite, How to load
+    
+    3. to decide the points of simularity between the embedding metrics and input-pics
+    """
     return database
 
 def webcam_face_recognizer(database):
@@ -109,10 +122,11 @@ def process_frame(img, frame, face_cascade):
         identity = find_identity(frame, x1, y1, x2, y2)
 
         if identity is not None:
+            cv2.putText(img, identity, (x1, y1), cv2.FONT_HERSHEY_PLAIN, 4, (255, 255, 255), 2, cv2.LINE_AA)
             identities.append(identity)
 
     if identities != []:
-        cv2.imwrite('example.png',img)
+        cv2.imwrite('_'.join(identities)+'.png',img)
 
         ready_to_detect_identity = False
         pool = Pool(processes=1) 
@@ -170,7 +184,17 @@ def who_is_it(image, database, model):
     if min_dist > 0.52:
         return None
     else:
+        print(str(identity))
         return str(identity)
+
+"""
+    
+    written by wooram 2018.08.14
+    
+    1. is there better way about desiding the points of max to distinguish
+    
+    
+"""
 
 def welcome_users(identities):
     """ Outputs a welcome audio message to the users """
@@ -185,14 +209,22 @@ def welcome_users(identities):
         welcome_message += 'and %s, ' % identities[-1]
         welcome_message += 'have a nice day!'
 
-    windows10_voice_interface.Speak(welcome_message)
-
     # Allow the program to start detecting identities again
     ready_to_detect_identity = True
+#    print(welcome_message)
+"""
+    written by wooram 2018.08.14
+    
+    1. if there are lots of people or a group of people, how to tag them and show them
+
+
+"""
 
 if __name__ == "__main__":
     database = prepare_database()
     webcam_face_recognizer(database)
+
+
 
 # ### References:
 # 
