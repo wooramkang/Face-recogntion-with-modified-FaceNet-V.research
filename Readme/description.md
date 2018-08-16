@@ -92,9 +92,11 @@ ToDo list :
 
 		3. gamma correction
 
-		4. VAE
+    d-prime. preprocessing with autoencoder
+    
+		1. VAE
 
-		5. denosing AE
+		2. denosing AE
 
 Done list : 
 

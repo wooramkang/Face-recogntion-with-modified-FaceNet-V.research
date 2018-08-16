@@ -6,7 +6,8 @@ I hope those code would be helpful for you
 
 
 A. keras code referenced from Skuldur's git
-but little changed and my question on research and codes added
+but a bit changed
+and my question on research and codes added
 
 
 B. preprocessing method added
