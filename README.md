@@ -1,6 +1,7 @@
 # modified_FaceNet
 
 
+i hope those code would be helpful for you
 
 keras code referenced from Skuldur's git
 but little changed and my question on research and codes added
