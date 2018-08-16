@@ -1,12 +1,10 @@
 # modified_FaceNet
 
 
-I hope those codes would be helpful for you
-
-who want to learn AI or machine learning things 
+I hope those code would be helpful for you
 
 
-\
+
 A. keras code referenced from Skuldur's git
 
 but a bit changed
@@ -14,7 +12,6 @@ but a bit changed
 and my question on research and codes added
 
 
-\
 B. preprocessing method added
 
 1. elimination light on LAB colour system
@@ -24,16 +21,15 @@ B. preprocessing method added
 3. gamma correction
 
 
-\
-C. future works(those stuff will be added in wooramkang's git)
 
+C. future works(those stuff will be added in wooramkang's git)
 
 1. preprocessing with AEs
 
-     1-a. denosing AE
+      1-a. denosing AE
   
     1-b. VAE
   
-     1-c. etc
+    1-c. etc
   
 2. situation recognition (called as image captioning) research 
