@@ -5,7 +5,7 @@
 keras code referenced from Skuldur's git
 but little changed and my question on research and codes added
 
-+
+'+
 
 preprocessing method added
 
