@@ -1,14 +1,15 @@
 # modified_FaceNet
 
 
-i hope those code would be helpful for you
+I hope those code would be helpful for you
 
-keras code referenced from Skuldur's git
+
+
+A. keras code referenced from Skuldur's git
 but little changed and my question on research and codes added
 
-+
 
-preprocessing method added
+B. preprocessing method added
 
 1. elimination light on LAB colour system
 
@@ -18,7 +19,7 @@ preprocessing method added
 
 
 
-future works(those stuff will be added in wooramkang's git)
+C. future works(those stuff will be added in wooramkang's git)
 
 1. preprocessing with AEs
 
