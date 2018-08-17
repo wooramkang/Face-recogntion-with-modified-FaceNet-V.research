@@ -57,9 +57,11 @@ def prepare_database():
     for file in glob.glob("images/*"):
         identity = os.path.splitext(os.path.basename(file))[0]
         identity = str(identity).split('_')[0]
-        print(identity)
-        ## from this, written by wooram 2018. 08. 13
-
+        #print(identity)
+        """ from this, written by wooram 2018. 08. 13
+        
+        1. is there any easier way to read dataset?
+        """
         database[identity] = img_path_to_encoding(file, FRmodel)
 
     #print(str(database["wooram"]))

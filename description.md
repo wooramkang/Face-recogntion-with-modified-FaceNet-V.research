@@ -1,7 +1,9 @@
 
 
 
-Face recognition research
+Face recognition research 
+
+    written by wooram kang
 
 
 1. environment && Dependency about research

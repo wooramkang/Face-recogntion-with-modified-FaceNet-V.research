@@ -1,6 +1,7 @@
 1. luminance problem
 
 all the results are affected by luminance around here
+so i tried to remove it and make robust features by preprocessing
 
 	a. LAB negative way
 	removing luminance way
@@ -19,8 +20,6 @@ all the results are affected by luminance around here
 	
 	=> good for protecting raw data but median performance
 
-
-
 	d. gamma correction
 	felt like erase important feature as well
 
@@ -34,3 +33,9 @@ all the results are affected by luminance around here
 2. ksize error
 
 	OpenCV Error: Assertion failed (type == srcB.type() && srcA.size() == srcB.size()) #1057
+    
+
+	to solve this kind of error, you should make sure the sizes of images you'd like to use
+	and filters paramaters as well 
+	
+	

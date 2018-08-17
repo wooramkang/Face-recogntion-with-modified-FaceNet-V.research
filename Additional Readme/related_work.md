@@ -5,11 +5,15 @@ I hope those code would be helpful for you
 
 
 
-A. keras code referenced from Skuldur's git
+A. about FaceNet
+
+most of concepts come from google's papers and other papers related to it
+
+and keras codes are referenced from Skuldur's git
 
 but a bit changed
 
-and my question on research and codes added
+and my questions on research and codes are added
 
 
 B. preprocessing method added
