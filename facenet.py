@@ -14,11 +14,13 @@ from preprocessing.LAB_luminance import *
 import preprocessing.histogram_equalization as hist
 import preprocessing.Gamma_correction as gamma
 
+"""
 PADDING = 50
 ready_to_detect_identity = True
 
 
 FRmodel = faceRecoModel(input_shape=(3, 96, 96))
+"""
 
 def triplet_loss(y_true, y_pred, alpha = 0.3):
     """
@@ -243,12 +245,12 @@ def welcome_users(identities):
     
     1. if there are lots of people or a group of people, how to tag them and show them
 
-
 """
 
-if __name__ == "__main__":
-    database = prepare_database()
-    webcam_face_recognizer(database)
+
+#if __name__ == "__main__":
+#    database = prepare_database()
+#    webcam_face_recognizer(database)
 
 
 
