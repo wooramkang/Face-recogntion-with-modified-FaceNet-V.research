@@ -50,6 +50,7 @@ location : /Dataset_Image_Face
 	caution. each group has diffenrt kinds of image'size for each. so make sure the sizes of groups to be as same as one's size of those.
 		 
 		 mainly, a. LFW & b. VGGFace2 be used
+		 and i don't provide those dataset. only links i left 
 
 
 3. trial algorithms	 A by A
