@@ -4,6 +4,10 @@
 from fr_utils import *
 from preprocessing.LAB_luminance import *
 
+"""
+    written by wooram 2018.08. 17
+"""
+
 
 def preprocessing_gamma_negative(img):
     height, width = img.shape[:2]

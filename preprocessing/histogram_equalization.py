@@ -8,16 +8,19 @@ from multiprocessing.dummy import Pool
 import numpy as np
 from fr_utils import *
 from preprocessing.LAB_luminance import *
+"""
+    written by wooram 2018.08. 17
+"""
 
 
 def preprocessing_hist(img):
-    height, width = img.shape[:2]
+    #height, width = img.shape[:2]
 
-    if height % 2 == 1:
-        height = height +1
+    #if height % 2 == 1:
+    #    height = height +1
 
-    if width % 2 == 1:
-        width = width +1
+    #if width % 2 == 1:
+    #    width = width +1
     """
     if height % 20 != 0:
         height = height + (height %24)
