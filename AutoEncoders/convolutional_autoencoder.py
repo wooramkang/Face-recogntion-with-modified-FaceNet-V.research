@@ -80,13 +80,14 @@ def convolution_AE():
     autoencoder.add(Dense(encoding_dim*2, activation='relu'))
     autoencoder.add(Dense(encoding_dim*4, activation='relu'))
     autoencoder.add(Dense(raw_dim, activation='relu'))
-    autoencoder.summary()
-    autoencoder.compile(optimizer='adam', loss='binary_crossentropy')
 
-if __name__ == "__main__":
-    convolution_AE()
+    autoencoder.compile(optimizer='adam', loss='binary_crossentropy')
+    autoencoder.summary()
+
 
 '''
+if __name__ == "__main__":
+    convolution_AE()
     autoencoder.add(Conv2D(512, (3, 3), activation='relu', padding='same', input_shape=x_train[1:].shape))
     autoencoder.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
     autoencoder.add(MaxPooling2D((2, 2)))

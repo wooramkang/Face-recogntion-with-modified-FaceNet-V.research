@@ -8,16 +8,18 @@ Face recognition research
 
 1. environment && Dependency about research
 
-OS : ubuntu 16.04
-language : python 3.5
-package : 
-	a. CUDA : 9.0
-	b. cuDNN : 7.1.4
-	c. opencv
-	d. tensorflow : 1.9.0
-	e. dlib : 19.15.0
-	f. numpy
-	g. sklearn
+
+    OS : ubuntu 16.04
+    language : python 3.5
+    package : 
+	    a. CUDA : 9.0
+	    b. cuDNN : 7.1.4
+	    c. opencv
+	    d. tensorflow : 1.9.0
+	    e. dlib : 19.15.0
+	    f. numpy
+	    g. sklearn
+	    h. keras 2.2.2 
 	...
 
 
