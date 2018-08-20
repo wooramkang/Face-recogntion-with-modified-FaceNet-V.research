@@ -54,22 +54,17 @@ def convolution_AE():
     x_train = x_train.reshape(len(x_train),raw_dim, raw_dim)
 
     print(x_train.shape)
+    """
+        written by wooram 2018.08. 17
+
+        1. hard to code convolutional AE from bottom
+
+        am i missing something?
+    """
     autoencoder = Sequential()
 
-"""
-    written by wooram 2018.08. 17
-    
-    1. hard to code convolutional AE from bottom
-    
-    am i missing something?
-"""
 #ENCODER
-    '''
-    autoencoder.add(Conv2D(512, (3, 3), activation='relu', padding='same', input_shape=x_train[1:].shape))
-    autoencoder.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
-    autoencoder.add(MaxPooling2D((2, 2)))
-    autoencoder.add(Conv2D(128, (2, 2), activation='relu', padding='same'))
-    '''
+
     autoencoder.add(Dense(encoding_dim * 4, activation='relu', input_shape=x_train[1:].shape))
     autoencoder.add(Dense(encoding_dim * 2, activation='relu'))
     autoencoder.add(MaxPooling2D((2, 2),strides=2))
@@ -86,7 +81,14 @@ def convolution_AE():
     autoencoder.add(Dense(encoding_dim*4, activation='relu'))
     autoencoder.add(Dense(raw_dim, activation='relu'))
     autoencoder.summary()
-
     autoencoder.compile(optimizer='adam', loss='binary_crossentropy')
+
 if __name__ == "__main__":
     convolution_AE()
+
+'''
+    autoencoder.add(Conv2D(512, (3, 3), activation='relu', padding='same', input_shape=x_train[1:].shape))
+    autoencoder.add(Conv2D(256, (3, 3), activation='relu', padding='same'))
+    autoencoder.add(MaxPooling2D((2, 2)))
+    autoencoder.add(Conv2D(128, (2, 2), activation='relu', padding='same'))
+'''
