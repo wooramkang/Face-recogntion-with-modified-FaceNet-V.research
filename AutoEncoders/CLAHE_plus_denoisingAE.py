@@ -51,7 +51,13 @@ def main_color():
         x_test_prime.append(hist.preprocessing_hist(_img))
     x_test = np.array(x_test_prime)
     print(x_test.shape)
+    """
+    written by wooramkang 2018.08.21
 
+    depending on CLAHE parameters,
+    
+
+    """
     img_rows = x_train.shape[1]
     img_cols = x_train.shape[2]
     channels = x_train.shape[3]

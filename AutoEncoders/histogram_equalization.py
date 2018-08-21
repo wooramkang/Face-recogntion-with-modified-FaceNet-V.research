@@ -28,7 +28,7 @@ def preprocessing_hist(img):
     #img= cv2.resize(img, (width, height))
     img = to_Lab(img)
     lumin, a, b = cv2.split(img)
-    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+    clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(4, 4))
     '''
     gridsize = [ (4,4) , (8, 8) , None ]
     '''
