@@ -73,13 +73,13 @@ def main_color():
             os.makedirs(save_dir)
 
     imgs = x_test[:100]
-    """
+
     i = 0
     for _img in imgs:
         i = i+1
         Image.fromarray(_img).save('saved_images/{0}_img_raw.png'.format(i))
     #print raw img each image by image
-    """
+
     imgs = imgs.reshape((10, 10, img_rows, img_cols, channels))
     imgs = np.vstack([np.hstack(i) for i in imgs])
     Image.fromarray(imgs).save('saved_images/sumof_img_raw.png')
@@ -172,13 +172,13 @@ def main_color():
     imgs = x_decoded[:100]
     print(imgs.shape)
     imgs = (imgs * 255).astype(np.uint8)
-    """
+
     i = 0
     for _img in imgs:
         i = i + 1
         Image.fromarray(_img).save('saved_images/{0}_img_gen.png'.format(i))
     #print generated img each image by image
-    """
+
     imgs = imgs.reshape((10, 10, img_rows, img_cols, channels))
     imgs = np.vstack([np.hstack(i) for i in imgs])
     Image.fromarray(imgs).save('saved_images/sumof_img_gen.png')

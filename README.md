@@ -105,11 +105,17 @@ ToDo list :
 
 Done list : 
 
-	a. FaceNet testing
+	a. FaceNet papers review
 
-	b. FaceNet papers review
+	b. FaceNet modeling
 
-	c. preprocessing by vision algorithm
+	c. FaceNet testing
 
-	d. VAE papers review
+	d. preprocessing by Image processing algorithm
+
+	e. including VAE, lots of autoendoers papers review
+
+	f. autoencoders modeling
+
+	g. autuencoders testing
 
