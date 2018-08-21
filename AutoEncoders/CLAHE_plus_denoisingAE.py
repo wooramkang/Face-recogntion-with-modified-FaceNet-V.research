@@ -19,13 +19,12 @@ import histogram_equalization as hist
 """
 written by wooramkang 2018.08.20
 
-referenced from lots of papaers and gits
+referenced from lots of papers and gits
 if you need those, i'll send you
 
 """
 
-def rgb2gray(rgb):
-    return np.dot(rgb[...,:3], [0.299, 0.587, 0.114])
+
 
 def main_color():
     # load the CIFAR10 data
@@ -73,33 +72,14 @@ def main_color():
     imgs = np.vstack([np.hstack(i) for i in imgs])
     Image.fromarray(imgs).save('saved_images/sumof_img_raw.png')
 
-    x_train_gray = rgb2gray(x_train)
-    x_test_gray = rgb2gray(x_test)
-
-    #x_train_gray = rgb2lab(x_train)
-    #x_test_gray = rgb2lab(x_test)
-    #trying on L of LAB
-
-    imgs = x_test_gray[:100]
-    imgs = imgs.reshape((10, 10, img_rows, img_cols))
-    imgs = np.vstack([np.hstack(i) for i in imgs])
-
     x_train = x_train.astype('float32') / 255
     x_test = x_test.astype('float32') / 255
 
-    x_train_gray = x_train_gray.astype('float32') / 255
-    x_test_gray = x_test_gray.astype('float32') / 255
-
-    # for gray
     x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, channels)
     x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, channels)
     print(x_train.shape)
 
-    x_train_gray = x_train_gray.reshape(x_train_gray.shape[0], img_rows, img_cols, 1)
-    x_test_gray = x_test_gray.reshape(x_test_gray.shape[0], img_rows, img_cols, 1)
-    print(x_train_gray.shape)
-
-    input_shape = (img_rows, img_cols, 1)
+    input_shape = (img_rows, img_cols, 3)
 
     batch_size = 32
     kernel_size = 3
@@ -167,15 +147,15 @@ def main_color():
     autoencoder.compile(loss='mse', optimizer='adam')
 
     callbacks = [lr_reducer, checkpoint]
-
-    autoencoder.fit(x_train_gray,
+    # .fit(data for train, data for groundtruth, validtation set, epochs, batchsize, ...)
+    autoencoder.fit(x_train,
                     x_train,
-                    validation_data=(x_test_gray, x_test),
+                    validation_data=(x_test, x_test),
                     epochs=30,
                     batch_size=batch_size,
                     callbacks=callbacks)
 
-    x_decoded = autoencoder.predict(x_test_gray)
+    x_decoded = autoencoder.predict(x_test)
 
     imgs = x_decoded[:100]
     print(imgs.shape)
