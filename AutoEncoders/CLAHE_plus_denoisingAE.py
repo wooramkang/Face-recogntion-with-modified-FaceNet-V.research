@@ -20,8 +20,8 @@ import histogram_equalization as hist
 written by wooramkang 2018.08.20
 
 referenced from lots of papers and gits
-if you need those, i'll send you
 
+if i write, the list of those will be tons of lines haha
 """
 
 
@@ -61,7 +61,7 @@ def main_color():
 
     depending on CLAHE parameters,
     
-    depending on dataset, you could use resize and colorize as well 
+    depending on dataset, you could use resizing and colorizing as well 
     """
     img_rows = x_train.shape[1]
     img_cols = x_train.shape[2]
