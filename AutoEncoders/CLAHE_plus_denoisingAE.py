@@ -191,8 +191,8 @@ def main_color():
     imgs = np.vstack([np.hstack(i) for i in imgs])
     Image.fromarray(imgs).save('saved_images/sumof_img_gen.png')
 
-if __name__ == "__main__":
-    main_color()
+#if __name__ == "__main__":
+#    main_color()
 
 
 

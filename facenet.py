@@ -97,7 +97,7 @@ def webcam_face_recognizer(database):
     
     while vc.isOpened():
         _, frame = vc.read()
-        _, _, frame = make_transformed_faceset(frame)
+        #_, _, frame = make_transformed_faceset(frame)
         '''
          written by wooramkang 2018.08. 23
          
@@ -107,7 +107,7 @@ def webcam_face_recognizer(database):
         # We do not want to detect a new identity while the program is in the process of identifying another person
         if ready_to_detect_identity:
             frame = process_frame(frame, frame, face_cascade)
-            #img = process_frame(frame, frame, face_cascade)
+            #img = process_frame(img, frame, face_cascade)
 
         key = cv2.waitKey(100)
         cv2.imshow("preview", frame)
@@ -128,7 +128,15 @@ def process_frame(img, frame, face_cascade):
 
     # Loop through all the faces detected and determine whether or not they are in the database
     identities = []
-
+    #faces, frame = make_transformed_faceset(frame)
+    '''
+        written by wooramkang 2018.08.23    
+    
+        1. applying affine_transform is damn hard
+        
+        2. when it's okay, frame-down happends badly
+    
+    '''
     #frame =  #preprocessing(frame)
     """
     by using LAB_luminance 
@@ -152,7 +160,6 @@ def process_frame(img, frame, face_cascade):
         y2 = y+h+PADDING
 
         img = cv2.rectangle(frame,(x1, y1),(x2, y2),(255,0,0),2)
-
         identity = find_identity(frame, x1, y1, x2, y2)
 
         if identity is not None:
@@ -173,7 +180,7 @@ def process_frame(img, frame, face_cascade):
         # We run this as a separate process so that the camera feedback does not freeze
         #pool.apply_async(welcome_users, [identities])
         
-        for multi_processess running
+#for multi_processess running, it's not necessary 
 '''
 
 
@@ -190,7 +197,7 @@ def find_identity(frame, x1, y1, x2, y2):
     height, width, channels = frame.shape
     # The padding is necessary since the OpenCV face detector creates the bounding box around the face and not the head
     part_image = frame[max(0, y1):min(height, y2), max(0, x1):min(width, x2)]
-    
+
     return who_is_it(part_image, database, FRmodel)
 
 
@@ -231,8 +238,8 @@ def who_is_it(image, database, model):
         print(str(identity))
         return str(identity)
 
-"""
-    
+
+"""   
     written by wooram 2018.08.14
     
     1. is there better way about desiding the points of max to distinguish

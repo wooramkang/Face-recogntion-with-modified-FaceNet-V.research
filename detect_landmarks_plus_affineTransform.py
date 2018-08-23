@@ -42,7 +42,6 @@ def make_transformed_faceset(frame):
     predictor = dlib.shape_predictor(p)
 
     gray = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-    dst_set = []
     rect_set = []
     #detect faces in gray scale frame
     rects = detector(gray, 0)
@@ -59,9 +58,10 @@ def make_transformed_faceset(frame):
         '''
         dst = affine_transform(shape, frame) # DO affine_transform
         gray = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
-        rects = detector(gray, 0)
-        dst_set.append(dst)
-        rect_set.append(rects)
+        rects_prime = detector(gray, 0)
+
+        for (i, rect_prime) in enumerate(rects_prime):
+            rect_set.append(rect_prime)
 
         '''
             written by wooram 2018.08.23
@@ -70,7 +70,7 @@ def make_transformed_faceset(frame):
     
             detection by dlib is easy and fast
         '''
-    return dst_set, rect_set, dst
+    return rect_set, dst
 
 
 
