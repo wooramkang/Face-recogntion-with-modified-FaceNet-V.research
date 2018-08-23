@@ -62,7 +62,15 @@ def main_color():
     depending on CLAHE parameters,
     
     depending on dataset, you could use resizing and colorizing as well 
+    
+    08.22
+    filter grid size    
+        2 * 2
+        4 * 4
+        8 * 8
+        16 * 16
     """
+
     img_rows = x_train.shape[1]
     img_cols = x_train.shape[2]
     channels = x_train.shape[3]
