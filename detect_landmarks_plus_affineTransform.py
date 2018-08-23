@@ -28,12 +28,15 @@ def affine_transform(shape_face, frame):
     angle = int(cv2.fastAtan2(w, 1))
 
     affine = cv2.getRotationMatrix2D((cols / 2, rows / 2), angle, 1)
+    '''
+    cols/2, rows/2 are important
+    '''
     dst = cv2.warpAffine(frame, affine, (cols, rows))
 
     return dst
 
 
-def make_transformed_faceset(rect, frame):
+def make_transformed_faceset(frame):
     p = "shape.dat"
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor(p)
@@ -43,7 +46,7 @@ def make_transformed_faceset(rect, frame):
     rect_set = []
     #detect faces in gray scale frame
     rects = detector(gray, 0)
-
+    dst = frame
     #determine facial landmarks over the face
     for (i, rect) in enumerate(rects):
         shape = predictor(gray, rect)
@@ -67,7 +70,7 @@ def make_transformed_faceset(rect, frame):
     
             detection by dlib is easy and fast
         '''
-    return dst_set, rect_set
+    return dst_set, rect_set, dst
 
 
 
