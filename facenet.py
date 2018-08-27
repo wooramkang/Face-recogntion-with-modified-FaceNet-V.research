@@ -170,18 +170,21 @@ def process_frame(img, frame, face_cascade):
     #cv2.namedWindow("Face")
     #cv2.imshow("Face", frame)
 
-    return img
-'''
-#if identities != []:
-        #cv2.imwrite('_'.join(identities)+'.png',img)
+    if identities != []:
+        cv2.imwrite('_'.join(identities) + '.png', img)
+    '''
+            #ready_to_detect_identity = False
+            #pool = Pool(processes=1)
+            # We run this as a separate process so that the camera feedback does not freeze
+            #pool.apply_async(welcome_users, [identities])
 
-        #ready_to_detect_identity = False
-        #pool = Pool(processes=1)
-        # We run this as a separate process so that the camera feedback does not freeze
-        #pool.apply_async(welcome_users, [identities])
-        
-#for multi_processess running, it's not necessary 
-'''
+    #for multi_processess running, it's not necessary 
+    '''
+
+    return img
+
+
+
 
 
 def find_identity(frame, x1, y1, x2, y2):
