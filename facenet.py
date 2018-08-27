@@ -172,12 +172,13 @@ def process_frame(img, frame, face_cascade):
 
     if identities != []:
         cv2.imwrite('_'.join(identities) + '.png', img)
-    '''
+    '''     
             #ready_to_detect_identity = False
             #pool = Pool(processes=1)
             # We run this as a separate process so that the camera feedback does not freeze
             #pool.apply_async(welcome_users, [identities])
-
+            
+    #written by wooramKang 2018.08.27
     #for multi_processess running, it's not necessary 
     '''
 
