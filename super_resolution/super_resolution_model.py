@@ -86,6 +86,7 @@ def main_model():
 
     x = Conv2D(filters=64,
               kernel_size=(3,3),
+
               strides=1,
               activation='relu',
               padding='same')(x)
@@ -97,7 +98,7 @@ def main_model():
                                    activation='relu',
                                    padding='same')(x))
 
-    avg_output = Average()([output_layer[0], output_layer[1], output_layer[2], output_layer[3]])
+    avg_output = Average()(output_layer)
 
     out = Conv2D(3, (3,3), activation='relu', padding='same', name ='finaloutput')(avg_output)
 
@@ -132,11 +133,11 @@ def main_model():
     callbacks = [early, lr_reducer, checkpoint]
 
     SupResolution.fit(x_train,
-                    x_train,
-                    validation_data=(x_test, x_test),
-                    epochs=30,
-                    batch_size=batch_size,
-                    callbacks=callbacks)
+                      x_train,
+                      validation_data=(x_test, x_test),
+                      epochs=30,
+                      batch_size=batch_size,
+                      callbacks=callbacks)
 
     x_decoded = SupResolution.predict(x_test)
 
@@ -152,7 +153,11 @@ def main_model():
     imgs = imgs.reshape((10, 10, img_rows, img_cols, channels))
     imgs = np.vstack([np.hstack(i) for i in imgs])
     Image.fromarray(imgs).save('saved_images/sumof_img_gen.png')
-
+    '''
+    written by wooramkang 2018.08.28
+    if images's size are quite small, then the effect of this network would be not that much as much as you expected
+      
+    '''
 if __name__ == "__main__":
     main_model()
 
