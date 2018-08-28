@@ -6,7 +6,7 @@ import cv2
 import time
 from multiprocessing.dummy import Pool
 import numpy as np
-from fr_utils import *
+from utils import *
 from preprocessing.LAB_luminance import *
 """
     written by wooram 2018.08. 17

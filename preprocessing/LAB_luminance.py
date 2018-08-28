@@ -2,7 +2,7 @@ import cv2
 import time
 from multiprocessing.dummy import Pool
 import numpy as np
-from fr_utils import *
+from utils import *
 
 """
     written by wooram 2018.08. 17

@@ -1,7 +1,7 @@
 
 
 #Gamma correction
-from fr_utils import *
+from utils import *
 from preprocessing.LAB_luminance import *
 
 """

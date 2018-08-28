@@ -8,7 +8,7 @@ import glob
 import numpy as np
 from numpy import genfromtxt
 import tensorflow as tf
-from fr_utils import *
+from utils import *
 from inception_blocks_v2 import *
 from preprocessing.LAB_luminance import *
 import preprocessing.histogram_equalization as hist
