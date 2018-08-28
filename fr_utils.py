@@ -153,6 +153,7 @@ def load_weights_from_FaceNet(FRmodel):
 
     FRmodel.summary()
 
+
 def load_weights():
     # Set weights path
     dirPath = './weights'

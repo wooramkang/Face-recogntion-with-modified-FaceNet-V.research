@@ -3,7 +3,7 @@ from __future__ import division
 from __future__ import print_function
 
 from keras.layers import Dense, Input
-from keras.layers import Conv2D, Flatten
+from keras.layers import Conv2D, Flatten, Average, Conv2DTranspose
 from keras.layers import Reshape, Conv2DTranspose
 from keras.models import Model
 from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
@@ -16,33 +16,16 @@ import os
 from PIL import Image
 import histogram_equalization as hist
 
-"""
-written by wooramkang 2018.08.20
 
-referenced from lots of papers and gits
-
-if i write, the list of those will be tons of lines haha
-"""
-
-
-
-def main_color():
+def main_model():
     # load the CIFAR10 data
     (x_train, _), (x_test, _) = cifar10.load_data()
     #(x_train, _), (x_test, _) = mnist.load_data()
-    """
-    for preprocessing,
-    RGB to LAB
-    
-    for img in all of img
-        DO CLAHE
-    
-    LAB to RGB 
-    """
+
     x_train_prime = []
     for _img in x_train:
         #_img = cv2.cvtColor(_img, cv2.COLOR_GRAY2RGB)
-        #_img = cv2.resize(_img, (32, 32))
+        _img = cv2.resize(_img, (64, 64))
         _img = hist.preprocessing_hist(_img)
         x_train_prime.append(_img)
     x_train = np.array(x_train_prime)
@@ -51,25 +34,12 @@ def main_color():
     x_test_prime = []
     for _img in x_test:
         #_img = cv2.cvtColor(_img, cv2.COLOR_GRAY2RGB)
-        #_img = cv2.resize(_img, (32, 32))
+        _img = cv2.resize(_img, (64, 64))
         _img = hist.preprocessing_hist(_img)
         x_test_prime.append(_img)
+
     x_test = np.array(x_test_prime)
     print(x_test.shape)
-    """
-    written by wooramkang 2018.08.21
-
-    depending on CLAHE parameters,
-    
-    depending on dataset, you could use resizing and colorizing as well 
-    
-    08.22
-    filter grid size    
-        2 * 2
-        4 * 4
-        8 * 8
-        16 * 16
-    """
 
     img_rows = x_train.shape[1]
     img_cols = x_train.shape[2]
@@ -86,7 +56,6 @@ def main_color():
     for _img in imgs:
         i = i+1
         Image.fromarray(_img).save('saved_images/{0}_img_raw.png'.format(i))
-    #print raw img each image by image
 
     imgs = imgs.reshape((10, 10, img_rows, img_cols, channels))
     imgs = np.vstack([np.hstack(i) for i in imgs])
@@ -98,57 +67,48 @@ def main_color():
     x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, channels)
     x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, channels)
     print(x_train.shape)
-
+    '''
+    written by wooramkang 2018.08.27
+    from line 0 to here
+    copied-and-pasted from my AutoEncoders codes
+    
+    from next-line to end
+    i wrote 
+    '''
     input_shape = (img_rows, img_cols, 3)
 
     batch_size = 32
-    kernel_size = 3
-    latent_dim = 256
-    layer_filters = [64, 128, 256]
+    layer_filters = [(32,1),(32,3),(32,5),(32,7)]
 
-    inputs = Input(shape=input_shape, name='encoder_input')
+    inputs = Input(shape=input_shape, name='model_input')
     x = inputs
-    for filters in layer_filters:
-        x = Conv2D(filters=filters,
-                   kernel_size=kernel_size,
-                   strides=2,
-                   activation='relu',
-                   padding='same')(x)
+    output_layer = []
 
-    shape = K.int_shape(x)
+    x = Conv2D(filters=64,
+              kernel_size=(3,3),
+              strides=1,
+              activation='relu',
+              padding='same')(x)
 
-    x = Flatten()(x)
-    latent = Dense(latent_dim, name='latent_vector')(x)
+    for filters, kernel_size in layer_filters:
+        output_layer.append(Conv2D(filters=filters,
+                                   kernel_size=kernel_size,
+                                   strides=1,
+                                   activation='relu',
+                                   padding='same')(x))
 
-    encoder = Model(inputs, latent, name='encoder')
-    #loss_func =
-    encoder.summary()
+    avg_output = Average()([output_layer[0], output_layer[1], output_layer[2], output_layer[3]])
 
-    latent_inputs = Input(shape=(latent_dim,), name='decoder_input')
-    x = Dense(shape[1]*shape[2]*shape[3])(latent_inputs)
-    x = Reshape((shape[1], shape[2], shape[3]))(x)
+    out = Conv2D(3, (3,3), activation='relu', padding='same', name ='finaloutput')(avg_output)
 
-    for filters in layer_filters[::-1]:
-        x = Conv2DTranspose(filters=filters,
-                            kernel_size=kernel_size,
-                            strides=2,
-                            activation='relu',
-                            padding='same')(x)
+    model = Model(inputs, out, name='model')
+    model.summary()
 
-    outputs = Conv2DTranspose(filters=channels,
-                              kernel_size=kernel_size,
-                              activation='sigmoid',
-                              padding='same',
-                              name='decoder_output')(x)
-
-    decoder = Model(latent_inputs, outputs, name='decoder')
-    decoder.summary()
-
-    autoencoder = Model(inputs, decoder(encoder(inputs)), name='autoencoder')
-    autoencoder.summary()
+    SupResolution = Model(inputs, model(inputs),name='super-resolution')
+    SupResolution.summary()
 
     save_dir = os.path.join(os.getcwd(), 'saved_models')
-    model_name = 'AE_model.{epoch:03d}.h5'
+    model_name = 'resolution_model.{epoch:03d}.h5'
     if not os.path.isdir(save_dir):
             os.makedirs(save_dir)
     filepath = os.path.join(save_dir, model_name)
@@ -164,19 +124,21 @@ def main_color():
                                  verbose=1,
                                  save_best_only=True)
 
-    autoencoder.compile(loss='mse', optimizer='adam')
+    SupResolution.compile(loss='mse', optimizer='adam')
 
-    callbacks = [lr_reducer, checkpoint]
+    #callbacks = [lr_reducer, checkpoint]
+    early = EarlyStopping(monitor='val_loss', min_delta=0, patience=5, verbose=1, mode='auto')
 
-    # .fit(data for train, data for groundtruth, validtation set, epochs, batchsize, ...)
-    autoencoder.fit(x_train,
+    callbacks = [early, lr_reducer, checkpoint]
+
+    SupResolution.fit(x_train,
                     x_train,
                     validation_data=(x_test, x_test),
                     epochs=30,
                     batch_size=batch_size,
                     callbacks=callbacks)
 
-    x_decoded = autoencoder.predict(x_test)
+    x_decoded = SupResolution.predict(x_test)
 
     imgs = x_decoded[:100]
     print(imgs.shape)
@@ -186,14 +148,13 @@ def main_color():
     for _img in imgs:
         i = i + 1
         Image.fromarray(_img).save('saved_images/{0}_img_gen.png'.format(i))
-    #print generated img each image by image
 
     imgs = imgs.reshape((10, 10, img_rows, img_cols, channels))
     imgs = np.vstack([np.hstack(i) for i in imgs])
     Image.fromarray(imgs).save('saved_images/sumof_img_gen.png')
 
-#if __name__ == "__main__":
-#    main_color()
+if __name__ == "__main__":
+    main_model()
 
 
 

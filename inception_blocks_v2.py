@@ -210,6 +210,7 @@ def inception_block_3b(X):
 
     return inception
 
+
 def faceRecoModel(input_shape):
     """
     Implementation of the Inception model used for FaceNet

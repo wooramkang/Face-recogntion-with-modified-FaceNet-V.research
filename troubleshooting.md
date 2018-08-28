@@ -64,3 +64,14 @@ so i tried to remove it and make robust features by preprocessing
      ((1, 1), ">f4"): ("F", "F;32BF"),
      ((1, 1), "<f8"): ("F", "F;64F"),
 
+
+4. for early stopping
+
+        early = EarlyStopping(monitor='val_loss', min_delta=0, patience=5, verbose=1, mode='auto')
+        callbacks = [early, lr_reducer, checkpoint]
+        SupResolution.fit(x_train,
+                    x_train,
+                    validation_data=(x_test, x_test),
+                    epochs=30,
+                    batch_size=batch_size,
+                    callbacks=callbacks)
