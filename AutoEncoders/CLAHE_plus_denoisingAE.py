@@ -42,8 +42,8 @@ def main_color():
     x_train_prime = []
     for _img in x_train:
         #_img = cv2.cvtColor(_img, cv2.COLOR_GRAY2RGB)
-        #_img = cv2.resize(_img, (32, 32))
-        _img = hist.preprocessing_hist(_img)
+        #_img = cv2.resize(_img, (299, 299))
+        #_img = hist.preprocessing_hist(_img)
         x_train_prime.append(_img)
     x_train = np.array(x_train_prime)
     print(x_train.shape)
@@ -51,8 +51,8 @@ def main_color():
     x_test_prime = []
     for _img in x_test:
         #_img = cv2.cvtColor(_img, cv2.COLOR_GRAY2RGB)
-        #_img = cv2.resize(_img, (32, 32))
-        _img = hist.preprocessing_hist(_img)
+        #_img = cv2.resize(_img, (299, 299))
+        #_img = hist.preprocessing_hist(_img)
         x_test_prime.append(_img)
     x_test = np.array(x_test_prime)
     print(x_test.shape)
@@ -121,7 +121,7 @@ def main_color():
     latent = Dense(latent_dim, name='latent_vector')(x)
 
     encoder = Model(inputs, latent, name='encoder')
-    #loss_func =
+
     encoder.summary()
 
     latent_inputs = Input(shape=(latent_dim,), name='decoder_input')
@@ -145,7 +145,6 @@ def main_color():
     decoder.summary()
 
     autoencoder = Model(inputs, decoder(encoder(inputs)), name='autoencoder')
-    autoencoder.summary()
 
     save_dir = os.path.join(os.getcwd(), 'saved_models')
     model_name = 'AE_model.{epoch:03d}.h5'
@@ -175,6 +174,7 @@ def main_color():
                     epochs=30,
                     batch_size=batch_size,
                     callbacks=callbacks)
+    autoencoder.summary()
 
     x_decoded = autoencoder.predict(x_test)
 
@@ -192,8 +192,8 @@ def main_color():
     imgs = np.vstack([np.hstack(i) for i in imgs])
     Image.fromarray(imgs).save('saved_images/sumof_img_gen.png')
 
-#if __name__ == "__main__":
-#    main_color()
+if __name__ == "__main__":
+    main_color()
 
 
 
