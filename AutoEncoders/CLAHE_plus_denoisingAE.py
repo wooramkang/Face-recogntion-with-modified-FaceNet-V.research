@@ -3,8 +3,8 @@ from __future__ import division
 from __future__ import print_function
 
 from keras.layers import Dense, Input
-from keras.layers import Conv2D, Flatten
-from keras.layers import Reshape, Conv2DTranspose
+from keras.layers import Conv2D, Flatten, Dropout
+from keras.layers import Reshape, Conv2DTranspose, BatchNormalization, Activation
 from keras.models import Model
 from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from keras.datasets import cifar10, mnist
@@ -28,7 +28,7 @@ if i write, the list of those will be tons of lines haha
 
 def main_color():
     # load the CIFAR10 data
-    (x_train, _), (x_test, _) = cifar10.load_data()
+    (x_train, _), (x_test, y_test) = cifar10.load_data()
     #(x_train, _), (x_test, _) = mnist.load_data()
     """
     for preprocessing,
@@ -42,7 +42,7 @@ def main_color():
     x_train_prime = []
     for _img in x_train:
         #_img = cv2.cvtColor(_img, cv2.COLOR_GRAY2RGB)
-        #_img = cv2.resize(_img, (299, 299))
+        #_img = cv2.resize(_img, (80, 80))
         #_img = hist.preprocessing_hist(_img)
         x_train_prime.append(_img)
     x_train = np.array(x_train_prime)
@@ -51,7 +51,7 @@ def main_color():
     x_test_prime = []
     for _img in x_test:
         #_img = cv2.cvtColor(_img, cv2.COLOR_GRAY2RGB)
-        #_img = cv2.resize(_img, (299, 299))
+        #_img = cv2.resize(_img, (80, 80))
         #_img = hist.preprocessing_hist(_img)
         x_test_prime.append(_img)
     x_test = np.array(x_test_prime)
@@ -81,7 +81,7 @@ def main_color():
             os.makedirs(save_dir)
 
     imgs = x_test[:100]
-
+    print(y_test[:100])
     i = 0
     for _img in imgs:
         i = i+1
@@ -97,55 +97,53 @@ def main_color():
 
     x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, channels)
     x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, channels)
-    print(x_train.shape)
 
     input_shape = (img_rows, img_cols, 3)
-
+    print(input_shape[1])
     batch_size = 32
     kernel_size = 3
     latent_dim = 256
-    layer_filters = [64, 128, 256]
+    layer_filters = [64, 32, 16]
 
     inputs = Input(shape=input_shape, name='encoder_input')
     x = inputs
+
+
     for filters in layer_filters:
         x = Conv2D(filters=filters,
-                   kernel_size=kernel_size,
-                   strides=2,
-                   activation='relu',
-                   padding='same')(x)
-
-    shape = K.int_shape(x)
-
-    x = Flatten()(x)
-    latent = Dense(latent_dim, name='latent_vector')(x)
-
-    encoder = Model(inputs, latent, name='encoder')
-
-    encoder.summary()
-
-    latent_inputs = Input(shape=(latent_dim,), name='decoder_input')
-    x = Dense(shape[1]*shape[2]*shape[3])(latent_inputs)
-    x = Reshape((shape[1], shape[2], shape[3]))(x)
+               kernel_size=kernel_size,
+               strides=1,
+               activation='relu',
+               padding='same')(x)
+        x = BatchNormalization()(x)
+        x = Activation('elu')(x)
 
     for filters in layer_filters[::-1]:
-        x = Conv2DTranspose(filters=filters,
-                            kernel_size=kernel_size,
-                            strides=2,
-                            activation='relu',
-                            padding='same')(x)
+        x = Conv2D(filters=filters,
+               kernel_size=kernel_size,
+               strides=1,
+               activation='relu',
+               padding='same')(x)
+        x = BatchNormalization()(x)
+        x = Activation('elu')(x)
 
-    outputs = Conv2DTranspose(filters=channels,
+    x = Dropout(rate=0.2)(x)
+    x = Conv2D(filters=3,
                               kernel_size=kernel_size,
+                              strides=1,
                               activation='sigmoid',
                               padding='same',
-                              name='decoder_output')(x)
+                              name='finaloutput_AE'
+                              )(x)
 
-    decoder = Model(latent_inputs, outputs, name='decoder')
-    decoder.summary()
+    outputs = x#Conv2D(3, (3, 3), activation='relu', padding='same', name='finaloutput')(outputs)
 
-    autoencoder = Model(inputs, decoder(encoder(inputs)), name='autoencoder')
+    #decoder = Model(latent_inputs, outputs, name='decoder')
+    #decoder.summary()
 
+    #autoencoder = Model(inputs, decoder(encoder(inputs)), name='autoencoder')
+    autoencoder = Model(inputs, x, name='autoencoder')
+    autoencoder.summary()
     save_dir = os.path.join(os.getcwd(), 'saved_models')
     model_name = 'AE_model.{epoch:03d}.h5'
     if not os.path.isdir(save_dir):
@@ -171,7 +169,7 @@ def main_color():
     autoencoder.fit(x_train,
                     x_train,
                     validation_data=(x_test, x_test),
-                    epochs=30,
+                    epochs=10,
                     batch_size=batch_size,
                     callbacks=callbacks)
     autoencoder.summary()

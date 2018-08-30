@@ -205,7 +205,8 @@ def load_dataset():
 
 def img_path_to_encoding(image_path, model):
     img1 = cv2.imread(image_path, 1)
-    return img_to_encoding(img1, model)#preprocessing(img1), model)
+    return img_to_encoding(img1, model) #preprocessing(img1), model)
+
 """
 by using LAB_luminance 
 preprocessed

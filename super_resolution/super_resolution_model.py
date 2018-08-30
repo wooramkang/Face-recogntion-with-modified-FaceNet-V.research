@@ -5,7 +5,7 @@ from __future__ import print_function
 from keras.layers import Dense, Input
 from keras.layers import Conv2D, Flatten, Average, Conv2DTranspose
 from keras.layers import Reshape, Conv2DTranspose
-from keras.models import Model
+from keras.models import Model, load_model
 from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 from keras.datasets import cifar10, mnist
 from keras.utils import plot_model
