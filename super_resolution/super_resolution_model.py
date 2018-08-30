@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
-from keras.layers import Dense, Input
+from keras.layers import Dense, Input, Activation, BatchNormalization, Dropout
 from keras.layers import Conv2D, Flatten, Average, Conv2DTranspose
 from keras.layers import Reshape, Conv2DTranspose
 from keras.models import Model, load_model
@@ -25,7 +25,7 @@ def main_model():
     x_train_prime = []
     for _img in x_train:
         #_img = cv2.cvtColor(_img, cv2.COLOR_GRAY2RGB)
-        _img = cv2.resize(_img, (64, 64))
+        #_img = cv2.resize(_img, (64, 64))
         _img = hist.preprocessing_hist(_img)
         x_train_prime.append(_img)
     x_train = np.array(x_train_prime)
@@ -34,7 +34,7 @@ def main_model():
     x_test_prime = []
     for _img in x_test:
         #_img = cv2.cvtColor(_img, cv2.COLOR_GRAY2RGB)
-        _img = cv2.resize(_img, (64, 64))
+        #_img = cv2.resize(_img, (64, 64))
         _img = hist.preprocessing_hist(_img)
         x_test_prime.append(_img)
 
@@ -78,12 +78,30 @@ def main_model():
     input_shape = (img_rows, img_cols, 3)
 
     batch_size = 32
-    layer_filters = [(32,1),(32,3),(32,5),(32,7)]
-
     inputs = Input(shape=input_shape, name='model_input')
     x = inputs
     output_layer = []
+    filter_norm = input_shape[1]
+    layer_filters = [(32, 1), (32, 3), (32, 5), (32, 7)]
 
+    x = Conv2D(filters=64,
+               kernel_size=(3, 3),
+               strides=1,
+               activation='relu',
+               padding='same')(x)
+
+    for filters, kernel_size in layer_filters:
+        output_layer.append(
+            Activation('elu')(
+                BatchNormalization()(Conv2D(filters=filters,
+                                            kernel_size=kernel_size,
+                                            strides=1,
+                                            activation='relu',
+                                            padding='same')(x))))
+    '''
+    written by wooramkang 2018.08. 30
+    batchnorm and relu => non biased?
+     
     x = Conv2D(filters=64,
               kernel_size=(3,3),
 
@@ -101,6 +119,10 @@ def main_model():
     avg_output = Average()(output_layer)
 
     out = Conv2D(3, (3,3), activation='relu', padding='same', name ='finaloutput')(avg_output)
+     '''
+    avg_output = Average()(output_layer)
+    avg_output = Dropout(rate=0.2)(avg_output)
+    out = Conv2D(3, (2, 2), activation='sigmoid', padding='same', name='finaloutput_SUPresol')(avg_output)
 
     model = Model(inputs, out, name='model')
     model.summary()
@@ -135,7 +157,7 @@ def main_model():
     SupResolution.fit(x_train,
                       x_train,
                       validation_data=(x_test, x_test),
-                      epochs=30,
+                      epochs=10,
                       batch_size=batch_size,
                       callbacks=callbacks)
 
