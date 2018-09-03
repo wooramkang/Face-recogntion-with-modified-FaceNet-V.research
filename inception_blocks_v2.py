@@ -134,7 +134,6 @@ def inception_block_2a(X):
     return inception
 
 def inception_block_2b(X):
-    #inception4e
     X_3x3 = utils.conv2d_bn(X,
                             layer='inception_4e_3x3',
                             cv1_out=160,
