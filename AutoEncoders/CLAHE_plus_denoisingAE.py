@@ -21,7 +21,7 @@ written by wooramkang 2018.08.20
 
 referenced from lots of papers and gits
 
-if i write, the list of those will be tons of lines haha
+if i write, the list of those will be tons of lines 
 """
 
 
