@@ -13,6 +13,7 @@ from keras.layers.pooling import MaxPooling2D, AveragePooling2D
 import h5py
 #import matplotlib.pyplot as plt
 from preprocessing.LAB_luminance import *
+from preprocessing.remove_shadow import *
 import preprocessing.histogram_equalization as hist
 import preprocessing.Gamma_correction as gamma
 
@@ -141,6 +142,7 @@ conv_shape = {
 
 def load_weights_from_FaceNet(FRmodel):
     # Load weights from csv files (which was exported from Openface torch model)
+    """
     weights = WEIGHTS
     weights_dict = load_weights()
 
@@ -150,7 +152,8 @@ def load_weights_from_FaceNet(FRmodel):
             FRmodel.get_layer(name).set_weights(weights_dict[name])
         elif model.get_layer(name) != None:
             model.get_layer(name).set_weights(weights_dict[name])
-
+    """
+    FRmodel.load_weights("REALFACE_final_facenn.h5")
     FRmodel.summary()
 
 
@@ -224,8 +227,11 @@ preprocessed
 
 
 def img_to_encoding(image, model):
-    image = cv2.resize(image, (96, 96)) 
-    img = image[...,::-1]
+    image = cv2.resize(image, (96, 96))
+    image = hist.preprocessing_hist(image)
+    img = remove_shadow(image)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img = np.reshape(img, (img.shape[0], img.shape[1], -1))
     img = np.around(np.transpose(img, (2,0,1))/255.0, decimals=12)
     x_train = np.array([img])
     embedding = model.predict_on_batch(x_train)

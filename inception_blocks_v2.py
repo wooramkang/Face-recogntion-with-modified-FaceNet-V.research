@@ -260,7 +260,7 @@ def faceRecoModel(input_shape):
     X = Dense(128, name='dense_layer')(X)
     
     # L2 normalization
-    X = Lambda(lambda  x: K.l2_normalize(x,axis=1))(X)
+    X = Lambda(lambda  x: K.l2_normalize(x, axis=1))(X)
 
     # Create model instance
     model = Model(inputs = X_input, outputs = X, name='FaceRecoModel')

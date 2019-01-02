@@ -75,3 +75,9 @@ so i tried to remove it and make robust features by preprocessing
                     epochs=30,
                     batch_size=batch_size,
                     callbacks=callbacks)
+
+
+5. prematured jpeg problem
+
+https://stackoverflow.com/questions/33548956/detect-avoid-premature-end-of-jpeg-in-cv2-python
+

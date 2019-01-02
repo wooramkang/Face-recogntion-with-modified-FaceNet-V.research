@@ -13,13 +13,20 @@ from inception_blocks_v2 import *
 from preprocessing.LAB_luminance import *
 import preprocessing.histogram_equalization as hist
 import preprocessing.Gamma_correction as gamma
+from preprocessing.remove_shadow import *
+from Model import *
 from detect_landmarks_plus_affineTransform import *
+from model_prime import *
 
-PADDING = 50
+#PADDING = 50
+PADDING = 0
 ready_to_detect_identity = True
-
-FRmodel = faceRecoModel(input_shape=(3, 96, 96))
-
+#FRmodel = faceRecoModel(input_shape=(3, 96, 96))
+FPRmodel = FACE((1, 96, 96))
+FPRmodel.load_weights("REALFACE_final_facenn.h5")
+F_P_Rmodel = FACE((1, 96, 96))
+#F_P_Rmodel = simpler_face_NN_residualnet((3, 96, 96), 64)
+F_P_Rmodel = FPRmodel
 
 def triplet_loss(y_true, y_pred, alpha = 0.3):
     """
@@ -49,8 +56,8 @@ def triplet_loss(y_true, y_pred, alpha = 0.3):
     return loss
 
 
-FRmodel.compile(optimizer = 'adam', loss = triplet_loss, metrics = ['accuracy'])
-load_weights_from_FaceNet(FRmodel)
+#FRmodel.compile(optimizer = 'adam', loss = triplet_loss, metrics = ['accuracy'])
+#load_weights_from_FaceNet(FRmodel)
 
 
 def prepare_database():
@@ -65,7 +72,7 @@ def prepare_database():
         
         1. is there any easier way to read dataset?
         """
-        database[identity] = img_path_to_encoding(file, FRmodel)
+        database[identity] = img_path_to_encoding(file, F_P_Rmodel)
 
     #print(str(database["wooram"]))
     """
@@ -94,7 +101,8 @@ def webcam_face_recognizer(database):
     vc = cv2.VideoCapture(0)
 
     face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-    
+    #F_P_Rmodel.load_weights('FACE_final_facenn.h5')
+    #F_P_Rmodel.load_weights('REALFACE_final_facenn.h5')
     while vc.isOpened():
         _, frame = vc.read()
         #_, _, frame = make_transformed_faceset(frame)
@@ -103,13 +111,14 @@ def webcam_face_recognizer(database):
          
          affine transform added
         '''
-        #img = frame
+        img = frame
         # We do not want to detect a new identity while the program is in the process of identifying another person
         if ready_to_detect_identity:
-            frame = process_frame(frame, frame, face_cascade)
+            frame = process_frame(img, frame, face_cascade)
             #img = process_frame(img, frame, face_cascade)
 
         key = cv2.waitKey(100)
+        #frame = remove_shadow(frame)
         cv2.imshow("preview", frame)
         #cv2.imshow("preview", img)
 
@@ -137,7 +146,7 @@ def process_frame(img, frame, face_cascade):
         2. when it's okay, frame-down happends badly
     
     '''
-    #frame =  #preprocessing(frame)
+    #frame = #preprocessing(frame)
     """
     by using LAB_luminance 
     preprocessed
@@ -154,6 +163,7 @@ def process_frame(img, frame, face_cascade):
     """
 
     for (x, y, w, h) in faces:
+        print("=======")
         x1 = x-PADDING
         y1 = y-PADDING
         x2 = x+w+PADDING
@@ -194,15 +204,15 @@ def find_identity(frame, x1, y1, x2, y2):
 
     x1,y1_____________
     |                 |
-    |                 |
+    |                  |
     |_________________x2,y2
 
     """
     height, width, channels = frame.shape
     # The padding is necessary since the OpenCV face detector creates the bounding box around the face and not the head
-    part_image = frame[max(0, y1):min(height, y2), max(0, x1):min(width, x2)]
-
-    return who_is_it(part_image, database, FRmodel)
+    #part_image = frame[max(0, y1):min(height, y2), max(0, x1):min(width, x2)]
+    part_image = frame[y1:y2, x1:x2]
+    return who_is_it(part_image, database, F_P_Rmodel)
 
 
 def who_is_it(image, database, model):
@@ -218,14 +228,38 @@ def who_is_it(image, database, model):
     min_dist -- the minimum distance between image_path encoding and the encodings from the database
     identity -- string, the name prediction for the person on image_path
     """
+    model.load_weights("REALFACE_final_facenn.h5")
     encoding = img_to_encoding(image, model)
-    
+    encoding = encoding[0]
+
     min_dist = 100
     identity = None
     
     # Loop over the database dictionary's names and encodings.
+
+    max = 0
+    max_idx = 0
+    temp = []
+    for l in encoding:
+        temp.append(int(l*100))
+
+    encoding = temp
+    del temp
+    print(encoding)
+
+    t = 0
+    for k in encoding:
+        if k > max:
+            max = k
+            max_idx = t
+
+        t = t+1
+
+    '''
     for (name, db_enc) in database.items():
         
+        
+         
         # Compute L2 distance between the target "encoding" and the current "emb" from the database.
         dist = np.linalg.norm(db_enc - encoding)
 
@@ -235,13 +269,26 @@ def who_is_it(image, database, model):
         if dist < min_dist:
             min_dist = dist
             identity = name
-    
+       
+     '''
+
+    if max > 70:
+        identity = max_idx
+    else:
+        identity = -1
+
+    identity = max_idx
+    print(str(identity))
+    return str(identity)
+
+
+'''
     if min_dist > 0.52:
         return None
     else:
         print(str(identity))
         return str(identity)
-
+'''
 
 """   
     written by wooram 2018.08.14
@@ -249,30 +296,9 @@ def who_is_it(image, database, model):
     1. is there better way about desiding the points of max to distinguish
     
     
-"""
-'''
-#for message-show. it's not necessary 
-def welcome_users(identities):
-    """ Outputs a welcome audio message to the users """
-    global ready_to_detect_identity
-    welcome_message = 'Welcome '
-
-    if len(identities) == 1:
-        welcome_message += '%s, have a nice day.' % identities[0]
-    else:
-        for identity_id in range(len(identities)-1):
-            welcome_message += '%s, ' % identities[identity_id]
-        welcome_message += 'and %s, ' % identities[-1]
-        welcome_message += 'have a nice day!'
-
-    # Allow the program to start detecting identities again
-    ready_to_detect_identity = True
-    print(welcome_message)
-'''
-"""
     written by wooram 2018.08.14
     
-    1. if there are lots of people or a group of people, how to tag them and show them
+    2. if there are lots of people or a group of people, how to tag them and show them
 
 """
 
