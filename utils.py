@@ -16,6 +16,7 @@ from preprocessing.LAB_luminance import *
 from preprocessing.remove_shadow import *
 import preprocessing.histogram_equalization as hist
 import preprocessing.Gamma_correction as gamma
+from affinetransform_with_landmark.detect_landmarks_plus_affineTransform import *
 
 _FLOATX = 'float32'
 
@@ -142,7 +143,7 @@ conv_shape = {
 
 def load_weights_from_FaceNet(FRmodel):
     # Load weights from csv files (which was exported from Openface torch model)
-    """
+
     weights = WEIGHTS
     weights_dict = load_weights()
 
@@ -152,10 +153,10 @@ def load_weights_from_FaceNet(FRmodel):
             FRmodel.get_layer(name).set_weights(weights_dict[name])
         elif model.get_layer(name) != None:
             model.get_layer(name).set_weights(weights_dict[name])
-    """
-    FRmodel.load_weights("REALFACE_final_facenn.h5")
-    FRmodel.summary()
 
+    #FRmodel.load_weights("REALFACE_final_facenn.h5")
+    FRmodel.summary()
+    return FRmodel
 
 def load_weights():
     # Set weights path
@@ -227,12 +228,40 @@ preprocessed
 
 
 def img_to_encoding(image, model):
-    image = cv2.resize(image, (96, 96))
-    image = hist.preprocessing_hist(image)
-    img = remove_shadow(image)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img = np.reshape(img, (img.shape[0], img.shape[1], -1))
-    img = np.around(np.transpose(img, (2,0,1))/255.0, decimals=12)
-    x_train = np.array([img])
+    _, image = make_transformed_faceset(image)
+    check = True
+
+    face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+    count = 0
+    for (x, y, w, h) in faces:
+        check = False
+        sub_img = image[y:y + h, x:x + w]
+
+        img = sub_img
+        #img = hist.preprocessing_hist(img)
+        #img = remove_shadow(img)
+        sub_img = img
+
+        sub_img = cv2.resize(sub_img, (96, 96))
+        #img = cv2.cvtColor(sub_img, cv2.COLOR_BGR2GRAY)
+
+        img = np.reshape(sub_img, (sub_img.shape[0], sub_img.shape[1], -1))
+        img = np.around(np.transpose(img, (2, 0, 1)) / 255.0, decimals=12)
+        x_train = np.array([img])
+        count = count + 1
+        #print(count)
+
+    if check or (count >= 2):
+        image = cv2.resize(image, (96, 96))
+        #image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        image = np.reshape(image, (image.shape[0], image.shape[1], -1))
+        image = np.around(np.transpose(image, (2, 0, 1)) / 255.0, decimals=12)
+        x_train = np.array([image])
+        #print(count)
+
     embedding = model.predict_on_batch(x_train)
+    #print(embedding.shape)
+
     return embedding

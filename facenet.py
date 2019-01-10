@@ -20,13 +20,10 @@ from model_prime import *
 
 #PADDING = 50
 PADDING = 0
+
 ready_to_detect_identity = True
-#FRmodel = faceRecoModel(input_shape=(3, 96, 96))
-FPRmodel = FACE((1, 96, 96))
-FPRmodel.load_weights("REALFACE_final_facenn.h5")
-F_P_Rmodel = FACE((1, 96, 96))
-#F_P_Rmodel = simpler_face_NN_residualnet((3, 96, 96), 64)
-F_P_Rmodel = FPRmodel
+FRmodel = faceRecoModel(input_shape=(3, 96, 96))
+
 
 def triplet_loss(y_true, y_pred, alpha = 0.3):
     """
@@ -56,14 +53,23 @@ def triplet_loss(y_true, y_pred, alpha = 0.3):
     return loss
 
 
-#FRmodel.compile(optimizer = 'adam', loss = triplet_loss, metrics = ['accuracy'])
+#FPRmodel = FACE((, 96, 96))
+FRmodel = load_weights_from_FaceNet(FRmodel)
+FRmodel.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
+#FPRmodel.load_weights("REALFACE_final_facenn.h5")
+FPRmodel = FRmodel
+FPRmodel.save_weights("temp_face.h5")
+F_P_Rmodel = FPRmodel
 #load_weights_from_FaceNet(FRmodel)
 
 
 def prepare_database():
+
     database = {}
 
+    img_path = "/home/rd/recognition_reaserch/FACE/Dataset/for_short_train/"
     # load all the images of individuals to recognize into the database
+    '''
     for file in glob.glob("images/*"):
         identity = os.path.splitext(os.path.basename(file))[0]
         identity = str(identity).split('_')[0]
@@ -72,7 +78,40 @@ def prepare_database():
         
         1. is there any easier way to read dataset?
         """
-        database[identity] = img_path_to_encoding(file, F_P_Rmodel)
+        
+        if identity in database:
+            database[identity].append(img_path_to_encoding(file, F_P_Rmodel))
+        else:
+            database[identity] = []
+    '''
+
+    folders = os.listdir(img_path)
+
+    for name in folders:
+        for file in glob.glob(img_path + name + "/*"):
+            identity = str(file).split('.')
+
+            if identity[len(identity) - 1] != 'jpg':
+                continue
+            '''
+            written by wooram kang 2018.09. 14
+             for broken images, you should check the images if it's okay or not
+
+            '''
+            with open(file, 'rb') as f:
+                check_chars = f.read()[-2:]
+                if check_chars != b'\xff\xd9':
+                    print('Not complete image')
+                    continue
+
+            identity = name
+
+            if identity in database:
+                database[identity].append(img_path_to_encoding(file, FRmodel))
+            else:
+                database[identity] = []
+
+
 
     #print(str(database["wooram"]))
     """
@@ -84,6 +123,7 @@ def prepare_database():
     
     3. to decide the points of simularity between the embedding metrics and input-pics
     """
+    print(database)
     return database
 
 
@@ -103,6 +143,7 @@ def webcam_face_recognizer(database):
     face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
     #F_P_Rmodel.load_weights('FACE_final_facenn.h5')
     #F_P_Rmodel.load_weights('REALFACE_final_facenn.h5')
+    k = 0
     while vc.isOpened():
         _, frame = vc.read()
         #_, _, frame = make_transformed_faceset(frame)
@@ -114,11 +155,13 @@ def webcam_face_recognizer(database):
         img = frame
         # We do not want to detect a new identity while the program is in the process of identifying another person
         if ready_to_detect_identity:
-            frame = process_frame(img, frame, face_cascade)
+            k = k+1
+            frame = process_frame(img, frame, face_cascade, k)
             #img = process_frame(img, frame, face_cascade)
 
         key = cv2.waitKey(100)
         #frame = remove_shadow(frame)
+        #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         cv2.imshow("preview", frame)
         #cv2.imshow("preview", img)
 
@@ -127,7 +170,7 @@ def webcam_face_recognizer(database):
     cv2.destroyWindow("preview")
 
 
-def process_frame(img, frame, face_cascade):
+def process_frame(img, frame, face_cascade, k):
     """
     Determine whether the current frame contains the faces of people from our database
     """
@@ -138,29 +181,7 @@ def process_frame(img, frame, face_cascade):
     # Loop through all the faces detected and determine whether or not they are in the database
     identities = []
     #faces, frame = make_transformed_faceset(frame)
-    '''
-        written by wooramkang 2018.08.23    
-    
-        1. applying affine_transform is damn hard
-        
-        2. when it's okay, frame-down happends badly
-    
-    '''
-    #frame = #preprocessing(frame)
-    """
-    by using LAB_luminance 
-    preprocessed
-    """
-    #frame = hist.preprocessing_hist(frame)
-    """
-        by using CLAHE (Contrast Limited Adaptive Histogram Equalization  
-        preprocessed
-    """
-    #frame = gamma.preprocessing_gamma(frame)
-    """
-            by using gamma correction  
-            preprocessed
-    """
+
 
     for (x, y, w, h) in faces:
         print("=======")
@@ -169,19 +190,21 @@ def process_frame(img, frame, face_cascade):
         x2 = x+w+PADDING
         y2 = y+h+PADDING
 
+        part_image = img[y1:y2, x1:x2]
+        part_image = cv2.resize(part_image, (96, 96))
+        cv2.imwrite('next/' + str(k) + '.jpg', part_image)
         img = cv2.rectangle(frame,(x1, y1),(x2, y2),(255,0,0),2)
         identity = find_identity(frame, x1, y1, x2, y2)
 
+
         if identity is not None:
             cv2.putText(img, identity, (x1, y1), cv2.FONT_HERSHEY_PLAIN, 4, (255, 255, 255), 2, cv2.LINE_AA)
-            identities.append(identity)
 
     #key = cv2.waitKey(100)
     #cv2.namedWindow("Face")
     #cv2.imshow("Face", frame)
 
-    if identities != []:
-        cv2.imwrite('_'.join(identities) + '.png', img)
+
     '''     
             #ready_to_detect_identity = False
             #pool = Pool(processes=1)
@@ -210,9 +233,11 @@ def find_identity(frame, x1, y1, x2, y2):
     """
     height, width, channels = frame.shape
     # The padding is necessary since the OpenCV face detector creates the bounding box around the face and not the head
+
     #part_image = frame[max(0, y1):min(height, y2), max(0, x1):min(width, x2)]
     part_image = frame[y1:y2, x1:x2]
-    return who_is_it(part_image, database, F_P_Rmodel)
+
+    return who_is_it(part_image, database, FRmodel)
 
 
 def who_is_it(image, database, model):
@@ -228,7 +253,7 @@ def who_is_it(image, database, model):
     min_dist -- the minimum distance between image_path encoding and the encodings from the database
     identity -- string, the name prediction for the person on image_path
     """
-    model.load_weights("REALFACE_final_facenn.h5")
+
     encoding = img_to_encoding(image, model)
     encoding = encoding[0]
 
@@ -239,27 +264,43 @@ def who_is_it(image, database, model):
 
     max = 0
     max_idx = 0
-    temp = []
-    for l in encoding:
-        temp.append(int(l*100))
 
-    encoding = temp
-    del temp
-    print(encoding)
 
-    t = 0
-    for k in encoding:
-        if k > max:
-            max = k
-            max_idx = t
+    name_dist = {}
 
-        t = t+1
+    for name in database:
+        name_mindist = 100
+        for query in database[name]:
+            dist = np.linalg.norm(query - encoding)
 
-    '''
+            #print('distance for %s is %s' % (name, dist))
+            # If this distance is less than the min_dist, then set min_dist to dist, and identity to name
+            if dist < name_mindist:
+                name_mindist = dist
+
+        if name_mindist < min_dist:
+            min_dist = name_mindist
+            identity = name
+        name_dist[name] = name_mindist
+    list_dist = []
+    for n in name_dist:
+        list_dist.append(name_dist[n])
+    list_dist.sort()
+
+    list_name = []
+    for n in name_dist:
+        for i in list_dist:
+            if i == name_dist[n]:
+                list_name.append(n)
+                break
+
+    print(name_dist)
+    print(list_name)
+    print(list_dist)
+
+    '''                
     for (name, db_enc) in database.items():
-        
-        
-         
+
         # Compute L2 distance between the target "encoding" and the current "emb" from the database.
         dist = np.linalg.norm(db_enc - encoding)
 
@@ -269,15 +310,8 @@ def who_is_it(image, database, model):
         if dist < min_dist:
             min_dist = dist
             identity = name
-       
-     '''
+    '''
 
-    if max > 70:
-        identity = max_idx
-    else:
-        identity = -1
-
-    identity = max_idx
     print(str(identity))
     return str(identity)
 
@@ -304,5 +338,6 @@ def who_is_it(image, database, model):
 
 
 if __name__ == "__main__":
+
     database = prepare_database()
     webcam_face_recognizer(database)

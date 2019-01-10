@@ -47,6 +47,7 @@ def make_transformed_faceset(frame):
     rects = detector(gray, 0)
     dst = frame
     #determine facial landmarks over the face
+
     for (i, rect) in enumerate(rects):
         shape = predictor(gray, rect)
         #convert facial landmarks to numpy array
@@ -57,11 +58,11 @@ def make_transformed_faceset(frame):
             cv2.circle(img=frame,center=(x,y),radius=2,color=(0,255,0),thickness=-1)
         '''
         dst = affine_transform(shape, frame) # DO affine_transform
-        gray = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
-        rects_prime = detector(gray, 0)
+        #gray = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
+        #rects_prime = detector(gray, 0)
 
-        for (i, rect_prime) in enumerate(rects_prime):
-            rect_set.append(rect_prime)
+        #for (i, rect_prime) in enumerate(rects_prime):
+            #rect_set.append(rect_prime)
 
         '''
             written by wooram 2018.08.23
