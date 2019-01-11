@@ -18,14 +18,22 @@ from Model import *
 from detect_landmarks_plus_affineTransform import *
 from model_prime import *
 
-#PADDING = 50
-PADDING = 0
+PADDING = 50
+#PADDING = 0
 
 ready_to_detect_identity = True
 FRmodel = faceRecoModel(input_shape=(3, 96, 96))
 
+k=0
+face_log = []
+face_log_name = []
+face_log_count = 0
+face_name_gt = {}
+face_name_idx_gt = []
+face_len = 0
 
 def triplet_loss(y_true, y_pred, alpha = 0.3):
+
     """
     Implementation of the triplet loss as defined by formula (3)
     
@@ -54,20 +62,33 @@ def triplet_loss(y_true, y_pred, alpha = 0.3):
 
 
 #FPRmodel = FACE((, 96, 96))
-FRmodel = load_weights_from_FaceNet(FRmodel)
+#FRmodel = load_weights_from_FaceNet(FRmodel)
 FRmodel.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
-#FPRmodel.load_weights("REALFACE_final_facenn.h5")
+FRmodel.load_weights("temp_face.h5")
 FPRmodel = FRmodel
-FPRmodel.save_weights("temp_face.h5")
+#FPRmodel.save_weights("temp_face.h5")
 F_P_Rmodel = FPRmodel
-#load_weights_from_FaceNet(FRmodel)
 
+
+def init_tracking(database):
+
+    global face_log_pos, face_log_name, face_log_count, face_name_idx_gt, face_name_gt_idx
+    face_log_pos = None
+    face_log_name = None
+    face_log_count = 0
+    face_name_idx_gt = [i for i in database]
+    count = 0
+    face_name_gt_idx = {}
+
+    for i in face_name_idx_gt:
+        face_name_gt_idx[i] = count
+        count = count + 1
 
 def prepare_database():
 
     database = {}
-
     img_path = "/home/rd/recognition_reaserch/FACE/Dataset/for_short_train/"
+
     # load all the images of individuals to recognize into the database
     '''
     for file in glob.glob("images/*"):
@@ -76,7 +97,7 @@ def prepare_database():
         #print(identity)
         """ from this, written by wooram 2018. 08. 13
         
-        1. is there any easier way to read dataset?
+        1. is there any easie
         """
         
         if identity in database:
@@ -111,9 +132,6 @@ def prepare_database():
             else:
                 database[identity] = []
 
-
-
-    #print(str(database["wooram"]))
     """
     written by wooram 2018.08.13
     
@@ -123,9 +141,10 @@ def prepare_database():
     
     3. to decide the points of simularity between the embedding metrics and input-pics
     """
+    init_tracking(database)
+
     print(database)
     return database
-
 
 def webcam_face_recognizer(database):
     """
@@ -135,15 +154,13 @@ def webcam_face_recognizer(database):
     If it contains a face, an audio message will be played welcoming the user.
     If not, the program will process the next frame from the webcam
     """
-    global ready_to_detect_identity
+    global ready_to_detect_identity, face_log
 
     cv2.namedWindow("preview")
     vc = cv2.VideoCapture(0)
 
     face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
-    #F_P_Rmodel.load_weights('FACE_final_facenn.h5')
-    #F_P_Rmodel.load_weights('REALFACE_final_facenn.h5')
-    k = 0
+
     while vc.isOpened():
         _, frame = vc.read()
         #_, _, frame = make_transformed_faceset(frame)
@@ -155,78 +172,127 @@ def webcam_face_recognizer(database):
         img = frame
         # We do not want to detect a new identity while the program is in the process of identifying another person
         if ready_to_detect_identity:
-            k = k+1
-            frame = process_frame(img, frame, face_cascade, k)
-            #img = process_frame(img, frame, face_cascade)
+
+            frame = process_frame(img, frame, face_cascade)
 
         key = cv2.waitKey(100)
-        #frame = remove_shadow(frame)
-        #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
         cv2.imshow("preview", frame)
-        #cv2.imshow("preview", img)
 
         if key == 27: # exit on ESC
             break
     cv2.destroyWindow("preview")
 
 
-def process_frame(img, frame, face_cascade, k):
+def tracking_face(frame, id, face_img = (0,0,10000,10000)):
+
+    global face_log_pos, face_log_name, face_log_count
+    global face_name_idx_gt, face_name_gt_idx
+
+    new_id = id
+
+    if (face_log_count > 0) and (face_log_count % 7== 0):
+        face_log_pos.pop(0)
+        face_log_name .pop(0)
+        face_log_count = 6
+
+    face_img = list(face_img)
+    height, width, channels = frame.shape
+
+    if face_log_pos is None:
+        face_log_pos = []
+        face_log_name = []
+
+        face_img[0] = max(0, face_img[0] - PADDING)
+        face_img[1] = max(0, face_img[1] - PADDING)
+        face_img[2] = min(width, face_img[2] + PADDING)
+        face_img[3] = min(height, face_img[3] + PADDING)
+
+        face_log_pos.append(face_img)
+        face_log_name.append([id])
+        face_log_count = face_log_count + 1
+
+        print("++++++++")
+        print(face_log_count)
+
+    else:
+        t = face_img
+        for idx in range(len(face_log_pos)):
+            f = face_log_pos[idx]
+
+            if t[0] >= f[0]:
+                if t[1] >= f[1]:
+                    if t[2] <= f[2]:
+                        if t[3] <= f[3]:
+
+                            face_img[0] = max(0, face_img[0] - PADDING)
+                            face_img[1] = max(0, face_img[1] - PADDING)
+                            face_img[2] = min(width, face_img[2] + PADDING)
+                            face_img[3] = min(height, face_img[3] + PADDING)
+
+                            face_log_pos[idx] = face_img
+                            face_log_name[idx].append(id)
+                            face_log_count = face_log_count + 1
+
+                            zoom_area = [face_name_gt_idx[i] for i in face_log_name[idx]]
+                            count_list = [0 for i in range(len(face_name_idx_gt))]
+
+                            for idx_area in zoom_area:
+                                count_list[idx_area] = count_list[idx_area] + 1
+
+                            max_id = count_list.index(max(count_list))
+
+                            print("++___++")
+                            print(face_log_count)
+
+                            return face_name_idx_gt[max_id]
+
+        face_log_pos = None
+        face_log_name = None
+        face_log_count = 0
+
+    return new_id
+
+def process_frame(img, frame, face_cascade):
     """
     Determine whether the current frame contains the faces of people from our database
     """
-    global ready_to_detect_identity
+    global ready_to_detect_identity, k
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
 
     # Loop through all the faces detected and determine whether or not they are in the database
-    identities = []
-    #faces, frame = make_transformed_faceset(frame)
-
 
     for (x, y, w, h) in faces:
-        print("=======")
-        x1 = x-PADDING
-        y1 = y-PADDING
-        x2 = x+w+PADDING
-        y2 = y+h+PADDING
 
+        x1 = x
+        y1 = y
+        x2 = x+w
+        y2 = y+h
+
+        # part_image = frame[max(0, y1):min(height, y2), max(0, x1):min(width, x2)]
         part_image = img[y1:y2, x1:x2]
         part_image = cv2.resize(part_image, (96, 96))
         cv2.imwrite('next/' + str(k) + '.jpg', part_image)
-        img = cv2.rectangle(frame,(x1, y1),(x2, y2),(255,0,0),2)
+        k = ((k+1) % 1000)
+        img = cv2.rectangle(frame, (x1, y1), (x2, y2),(255,0,0),2)
+
         identity = find_identity(frame, x1, y1, x2, y2)
+        identity = tracking_face(frame, identity, (x1, y1, x2, y2))
 
+        print("=======")
 
-        if identity is not None:
-            cv2.putText(img, identity, (x1, y1), cv2.FONT_HERSHEY_PLAIN, 4, (255, 255, 255), 2, cv2.LINE_AA)
-
-    #key = cv2.waitKey(100)
-    #cv2.namedWindow("Face")
-    #cv2.imshow("Face", frame)
-
-
-    '''     
-            #ready_to_detect_identity = False
-            #pool = Pool(processes=1)
-            # We run this as a separate process so that the camera feedback does not freeze
-            #pool.apply_async(welcome_users, [identities])
-            
-    #written by wooramKang 2018.08.27
-    #for multi_processess running, it's not necessary 
-    '''
+        cv2.putText(img, identity, (x1, y1), cv2.FONT_HERSHEY_PLAIN, 4, (255, 255, 255), 2, cv2.LINE_AA)
 
     return img
-
-
-
 
 
 def find_identity(frame, x1, y1, x2, y2):
     """
     Determine whether the face contained within the bounding box exists in our database
 
-    x1,y1_____________
-    |                 |
+    x1,y1______________
+    |                  |
     |                  |
     |_________________x2,y2
 
@@ -264,7 +330,6 @@ def who_is_it(image, database, model):
 
     max = 0
     max_idx = 0
-
 
     name_dist = {}
 
