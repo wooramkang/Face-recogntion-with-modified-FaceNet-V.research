@@ -17,20 +17,26 @@ from preprocessing.remove_shadow import *
 from Model import *
 from detect_landmarks_plus_affineTransform import *
 from model_prime import *
+import pickle
+import threading
+import time
 
 PADDING = 50
 #PADDING = 0
 
 ready_to_detect_identity = True
+IS_NEW_DATABASE = False
+
 FRmodel = faceRecoModel(input_shape=(3, 96, 96))
 
-k=0
+k = 0
 face_log = []
 face_log_name = []
 face_log_count = 0
 face_name_gt = {}
 face_name_idx_gt = []
 face_len = 0
+temp_frame = None
 
 def triplet_loss(y_true, y_pred, alpha = 0.3):
 
@@ -77,9 +83,9 @@ def init_tracking(database):
     face_log_name = None
     face_log_count = 0
     face_name_idx_gt = [i for i in database]
+    face_name_idx_gt.append("None")
     count = 0
     face_name_gt_idx = {}
-
     for i in face_name_idx_gt:
         face_name_gt_idx[i] = count
         count = count + 1
@@ -105,42 +111,49 @@ def prepare_database():
         else:
             database[identity] = []
     '''
-
-    folders = os.listdir(img_path)
-
-    for name in folders:
-        for file in glob.glob(img_path + name + "/*"):
-            identity = str(file).split('.')
-
-            if identity[len(identity) - 1] != 'jpg':
-                continue
-            '''
-            written by wooram kang 2018.09. 14
-             for broken images, you should check the images if it's okay or not
-
-            '''
-            with open(file, 'rb') as f:
-                check_chars = f.read()[-2:]
-                if check_chars != b'\xff\xd9':
-                    print('Not complete image')
-                    continue
-
-            identity = name
-
-            if identity in database:
-                database[identity].append(img_path_to_encoding(file, FRmodel))
-            else:
-                database[identity] = []
-
     """
     written by wooram 2018.08.13
-    
+
     1. think about How to save the embedding metrics
-    
+
     2. the opposite, How to load
-    
+
     3. to decide the points of simularity between the embedding metrics and input-pics
     """
+
+    if IS_NEW_DATABASE:
+        folders = os.listdir(img_path)
+        for name in folders:
+            for file in glob.glob(img_path + name + "/*"):
+                identity = str(file).split('.')
+
+                if identity[len(identity) - 1] != 'jpg':
+                    continue
+                '''
+                written by wooram kang 2018.09. 14
+                 for broken images, you should check the images if it's okay or not
+    
+                '''
+                with open(file, 'rb') as f:
+                    check_chars = f.read()[-2:]
+                    if check_chars != b'\xff\xd9':
+                        print('Not complete image')
+                        continue
+
+                identity = name
+
+                if identity in database:
+                    database[identity].append(img_path_to_encoding(file, FRmodel))
+                else:
+                    database[identity] = []
+        with open('face_embed.obj', 'wb') as FE:
+            pickle.dump(database, FE)
+    else:
+
+        with open('face_embed.obj', 'rb') as FE:
+            database = pickle.load(FE)
+
+    print("data load done")
     init_tracking(database)
 
     print(database)
@@ -154,14 +167,16 @@ def webcam_face_recognizer(database):
     If it contains a face, an audio message will be played welcoming the user.
     If not, the program will process the next frame from the webcam
     """
-    global ready_to_detect_identity, face_log
 
     cv2.namedWindow("preview")
     vc = cv2.VideoCapture(0)
 
     face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+    starting_time = int(time.time())
 
     while vc.isOpened():
+        now = int(time.time())
+        diff_time = (now - starting_time) % 2
         _, frame = vc.read()
         #_, _, frame = make_transformed_faceset(frame)
         '''
@@ -171,10 +186,16 @@ def webcam_face_recognizer(database):
         '''
         img = frame
         # We do not want to detect a new identity while the program is in the process of identifying another person
-        if ready_to_detect_identity:
 
+        if diff_time == 0:
+            #face_recognizer_thread = threading.Thread(target=process_frame, args=(img, frame, face_cascade))
+            #face_recognizer_thread.start()
             frame = process_frame(img, frame, face_cascade)
 
+        global temp_frame
+        if temp_frame is not None:
+            frame = temp_frame
+            temp_frame = None
         key = cv2.waitKey(100)
 
         cv2.imshow("preview", frame)
@@ -193,7 +214,7 @@ def tracking_face(frame, id, face_img = (0,0,10000,10000)):
 
     if (face_log_count > 0) and (face_log_count % 7== 0):
         face_log_pos.pop(0)
-        face_log_name .pop(0)
+        face_log_name.pop(0)
         face_log_count = 6
 
     face_img = list(face_img)
@@ -212,8 +233,8 @@ def tracking_face(frame, id, face_img = (0,0,10000,10000)):
         face_log_name.append([id])
         face_log_count = face_log_count + 1
 
-        print("++++++++")
-        print(face_log_count)
+        #print("++++++++")
+        #print(face_log_count)
 
     else:
         t = face_img
@@ -242,8 +263,8 @@ def tracking_face(frame, id, face_img = (0,0,10000,10000)):
 
                             max_id = count_list.index(max(count_list))
 
-                            print("++___++")
-                            print(face_log_count)
+                            #print("++___++")
+                            #print(face_log_count)
 
                             return face_name_idx_gt[max_id]
 
@@ -257,12 +278,11 @@ def process_frame(img, frame, face_cascade):
     """
     Determine whether the current frame contains the faces of people from our database
     """
-    global ready_to_detect_identity, k
+    global k
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
 
     # Loop through all the faces detected and determine whether or not they are in the database
-
     for (x, y, w, h) in faces:
 
         x1 = x
@@ -279,11 +299,15 @@ def process_frame(img, frame, face_cascade):
 
         identity = find_identity(frame, x1, y1, x2, y2)
         identity = tracking_face(frame, identity, (x1, y1, x2, y2))
-
+        print("final_id")
+        print(str(identity))
         print("=======")
 
-        cv2.putText(img, identity, (x1, y1), cv2.FONT_HERSHEY_PLAIN, 4, (255, 255, 255), 2, cv2.LINE_AA)
+        if identity != "None":
+            cv2.putText(img, identity, (x1, y1), cv2.FONT_HERSHEY_PLAIN, 4, (255, 255, 255), 2, cv2.LINE_AA)
 
+    global temp_frame
+    temp_frame = img
     return img
 
 
@@ -331,6 +355,7 @@ def who_is_it(image, database, model):
     max = 0
     max_idx = 0
 
+    Threshold =0.5
     name_dist = {}
 
     for name in database:
@@ -360,7 +385,6 @@ def who_is_it(image, database, model):
                 break
 
     print(name_dist)
-    print(list_name)
     print(list_dist)
 
     '''                
@@ -372,11 +396,12 @@ def who_is_it(image, database, model):
         print('distance for %s is %s' %(name, dist))
 
         # If this distance is less than the min_dist, then set min_dist to dist, and identity to name
-        if dist < min_dist:
-            min_dist = dist
-            identity = name
-    '''
 
+    '''
+    if min_dist >= Threshold:
+        identity = "None"
+    print("=======")
+    print("guess_trial")
     print(str(identity))
     return str(identity)
 
