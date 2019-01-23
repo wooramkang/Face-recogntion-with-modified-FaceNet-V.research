@@ -21,12 +21,11 @@ import pickle
 import threading
 import time
 
-PADDING = 50
-#PADDING = 0
+PADDING = 100
 
 ready_to_detect_identity = True
 IS_NEW_DATABASE = False
-
+IS_THREAD_OFF = True
 FRmodel = faceRecoModel(input_shape=(3, 96, 96))
 
 k = 0
@@ -37,6 +36,7 @@ face_name_gt = {}
 face_name_idx_gt = []
 face_len = 0
 temp_frame = None
+
 
 def triplet_loss(y_true, y_pred, alpha = 0.3):
 
@@ -89,6 +89,7 @@ def init_tracking(database):
     for i in face_name_idx_gt:
         face_name_gt_idx[i] = count
         count = count + 1
+
 
 def prepare_database():
 
@@ -159,6 +160,16 @@ def prepare_database():
     print(database)
     return database
 
+
+def process_face(frame):
+
+    face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+    img = frame
+    frame = process_frame(img, frame, face_cascade)
+
+    return frame
+
+
 def webcam_face_recognizer(database):
     """
     Runs a loop that extracts images from the computer's webcam and determines whether or not
@@ -169,10 +180,11 @@ def webcam_face_recognizer(database):
     """
 
     cv2.namedWindow("preview")
-    vc = cv2.VideoCapture(0)
+    vc = cv2.VideoCapture(1)
 
     face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
     starting_time = int(time.time())
+    global IS_THREAD_OFF
 
     while vc.isOpened():
         now = int(time.time())
@@ -187,15 +199,23 @@ def webcam_face_recognizer(database):
         img = frame
         # We do not want to detect a new identity while the program is in the process of identifying another person
 
-        if diff_time == 0:
-            #face_recognizer_thread = threading.Thread(target=process_frame, args=(img, frame, face_cascade))
-            #face_recognizer_thread.start()
-            frame = process_frame(img, frame, face_cascade)
 
+        if diff_time == 0:
+            if IS_THREAD_OFF:
+                #face_recognizer_thread = Thread_face(img, frame, face_cascade, database, FRmodel)
+                #face_recognizer_thread.start()
+                #IS_THREAD_OFF = False
+                frame = process_frame(img, frame, face_cascade)
+                
+
+        '''
         global temp_frame
+        
         if temp_frame is not None:
             frame = temp_frame
             temp_frame = None
+            IS_THREAD_OFF = True
+        '''
         key = cv2.waitKey(100)
 
         cv2.imshow("preview", frame)
@@ -233,9 +253,6 @@ def tracking_face(frame, id, face_img = (0,0,10000,10000)):
         face_log_name.append([id])
         face_log_count = face_log_count + 1
 
-        #print("++++++++")
-        #print(face_log_count)
-
     else:
         t = face_img
         for idx in range(len(face_log_pos)):
@@ -263,9 +280,6 @@ def tracking_face(frame, id, face_img = (0,0,10000,10000)):
 
                             max_id = count_list.index(max(count_list))
 
-                            #print("++___++")
-                            #print(face_log_count)
-
                             return face_name_idx_gt[max_id]
 
         face_log_pos = None
@@ -279,6 +293,7 @@ def process_frame(img, frame, face_cascade):
     Determine whether the current frame contains the faces of people from our database
     """
     global k
+
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
 
@@ -291,9 +306,9 @@ def process_frame(img, frame, face_cascade):
         y2 = y+h
 
         # part_image = frame[max(0, y1):min(height, y2), max(0, x1):min(width, x2)]
-        part_image = img[y1:y2, x1:x2]
+        part_image = frame[y1:y2, x1:x2]
         part_image = cv2.resize(part_image, (96, 96))
-        cv2.imwrite('next/' + str(k) + '.jpg', part_image)
+        #cv2.imwrite('next/' + str(k) + '.jpg', part_image)
         k = ((k+1) % 1000)
         img = cv2.rectangle(frame, (x1, y1), (x2, y2),(255,0,0),2)
 
@@ -346,16 +361,13 @@ def who_is_it(image, database, model):
 
     encoding = img_to_encoding(image, model)
     encoding = encoding[0]
-
     min_dist = 100
     identity = None
     
     # Loop over the database dictionary's names and encodings.
 
-    max = 0
-    max_idx = 0
 
-    Threshold =0.5
+    Threshold =0.45
     name_dist = {}
 
     for name in database:
@@ -363,7 +375,7 @@ def who_is_it(image, database, model):
         for query in database[name]:
             dist = np.linalg.norm(query - encoding)
 
-            #print('distance for %s is %s' % (name, dist))
+            # print('distance for %s is %s' % (name, dist))
             # If this distance is less than the min_dist, then set min_dist to dist, and identity to name
             if dist < name_mindist:
                 name_mindist = dist
@@ -387,17 +399,6 @@ def who_is_it(image, database, model):
     print(name_dist)
     print(list_dist)
 
-    '''                
-    for (name, db_enc) in database.items():
-
-        # Compute L2 distance between the target "encoding" and the current "emb" from the database.
-        dist = np.linalg.norm(db_enc - encoding)
-
-        print('distance for %s is %s' %(name, dist))
-
-        # If this distance is less than the min_dist, then set min_dist to dist, and identity to name
-
-    '''
     if min_dist >= Threshold:
         identity = "None"
     print("=======")
