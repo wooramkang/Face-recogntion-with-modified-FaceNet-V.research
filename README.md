@@ -19,7 +19,7 @@ Face recognition research
 	    e. dlib : 19.15.0
 	    f. numpy
 	    g. sklearn
-	    h. keras 2.2.2 
+	    h. keras 2.2.3
 	...
 
 
@@ -119,3 +119,27 @@ Done list :
 
 	g. autuencoders testing
 
+
+	preprocessing with CV
+
+		1-1. remove light on LAB colour system
+
+		1-2. CLAHE
+
+		1-3. gamma correction
+		
+		2. affine transform
+		
+	preprocessing with autoencoder
+    
+		1. denosing AE
+		
+	detection and discrimination with a model based FACENET
+		
+		1. FACENET
+		
+	postprocessing
+	
+		1. Face tracking
+		
+	
