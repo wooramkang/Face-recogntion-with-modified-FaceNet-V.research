@@ -120,6 +120,8 @@ Done list :
 	g. autuencoders testing
 
 
+Final model : 
+
 	preprocessing with CV
 
 		1-1. remove light on LAB colour system
